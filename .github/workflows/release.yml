@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository for release...sss
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Use Node.js
@@ -18,18 +18,10 @@ jobs:
         with:
           node-version: "20.10.0"
 
-      - name: Cache Node.js modules.....
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run semantic-release
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: node -e "console.log(require('./release.config.js'))" && npx semantic-release
+        run: npx semantic-release
