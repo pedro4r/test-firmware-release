@@ -1,0 +1,44 @@
+name: Deploy Release Archive to S3
+
+on:
+  push:
+    branches:
+      - test/release-s3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Read version from package.json
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload files to S3 using package version
+        run: |
+          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }}/releases/$PACKAGE_VERSION/ \
+            --exclude ".git/*" \
+            --delete
+
+      - name: Confirmation
+        run: echo "Deployment of version $PACKAGE_VERSION completed successfully."
